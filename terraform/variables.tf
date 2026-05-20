@@ -4,6 +4,12 @@ variable "folder_id" {
   default = "b1gs2kftghrh9vu74phs"
 }
 
+variable "repository_name" {
+  description = "Repository name inside registry"
+  type        = string
+  default     = "test-repository"
+}
+
 variable "cloud_id" {
     type = string
     default = "b1gj4267eqa8nhcdjka9"
@@ -41,7 +47,7 @@ variable "nat" {
 
 variable "nat_mysql" {
   type = bool
-  default = false
+  default = true
   description = "NAT for MySQL"
 }
 variable "mysql_user" {

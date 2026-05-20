@@ -18,6 +18,21 @@ resource "yandex_vpc_security_group" "LAN" {
 
 }
 
+resource "yandex_vpc_gateway" "nat_gateway" {
+  name = "nat-gateway"
+  shared_egress_gateway {}
+}
+
+resource "yandex_vpc_route_table" "rt" {
+  name       = "route-table"
+  network_id = yandex_vpc_network.web_vpc.id
+
+  static_route {
+    destination_prefix = "0.0.0.0/0"
+    gateway_id         = yandex_vpc_gateway.nat_gateway.id
+  }
+}
+
 resource "yandex_vpc_security_group" "web_out" {
   name       = "web-sg-${var.hostname}"
   network_id = yandex_vpc_network.web_vpc.id

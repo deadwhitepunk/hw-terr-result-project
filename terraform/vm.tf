@@ -7,6 +7,7 @@ resource "yandex_vpc_subnet" "web_subnet" {
   name           = "${var.vpc_name}-ru-central1-a"
   zone           = "ru-central1-a"
   network_id     = yandex_vpc_network.web_vpc.id
+  route_table_id = yandex_vpc_route_table.rt.id
   v4_cidr_blocks = var.vm_web_default_cidr
 }
 
