@@ -1,8 +1,8 @@
 version: '3.8'
 services:
   app:
-    image: test:latest
-    container_name: flask_app
+    image: web-app:latest
+    container_name: web_app
     ports:
       - "80:5000"
     environment:

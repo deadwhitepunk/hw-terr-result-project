@@ -1,0 +1,75 @@
+- name: Deploy web-app
+  hosts: web
+  vars:
+    ansible_ssh_user: ubuntu
+  become: true
+
+  pre_tasks:
+    - name: Validating the ssh port is open
+      ansible.builtin.wait_for:
+        host: "{{ (ansible_ssh_host|default(ansible_host))|default(inventory_hostname) }}"
+        port: 22
+        delay: 5
+        timeout: 300
+        state: started
+        search_regex: OpenSSH
+    - name: Stop unattended-upgrades before installation
+      ansible.builtin.systemd:
+        name: unattended-upgrades
+        state: stopped
+
+  tasks:
+    - name: Copy Dockerfile
+      ansible.builtin.copy:
+        src: ../app/Dockerfile.python
+        dest: /home/ubuntu
+        owner: ubuntu
+        group: ubuntu
+        mode: '0644'
+    - name: Copy Docker compose
+      ansible.builtin.copy:
+        src: ../app/docker-compose.yaml
+        dest: /home/ubuntu
+        owner: ubuntu
+        group: ubuntu
+        mode: '0644'
+    - name: Copy .env
+      ansible.builtin.copy:
+        src: ../app/.env
+        dest: /home/ubuntu
+        owner: ubuntu
+        group: ubuntu
+        mode: '0644'
+    - name: Copy main.py
+      ansible.builtin.copy:
+        src: ../app/main.py
+        dest: /home/ubuntu
+        owner: ubuntu
+        group: ubuntu
+        mode: '0644'
+    - name: Copy root.crt
+      ansible.builtin.copy:
+        src: ../app/root.crt
+        dest: /home/ubuntu
+        owner: ubuntu
+        group: ubuntu
+        mode: '0644'
+    - name: Copy requirements.txt
+      ansible.builtin.copy:
+        src: ../app/requirements.txt
+        dest: /home/ubuntu
+        owner: ubuntu
+        group: ubuntu
+        mode: '0644'
+    - name: Build app image
+      community.docker.docker_image_build:
+        name: web-app:latest
+        path: /home/ubuntu
+        dockerfile: Dockerfile.python
+    - name: Deploy web-app with Docker Compose
+      community.docker.docker_compose_v2:
+        project_name: web-app
+        project_src: /home/ubuntu
+        files:
+          - docker-compose.yaml
+        state: present

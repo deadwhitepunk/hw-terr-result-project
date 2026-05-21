@@ -28,7 +28,6 @@ resource "yandex_compute_disk" "boot_disk_web" {
 resource "yandex_compute_instance" "web" {
   name        = "${var.zone}-${var.hostname}"
   hostname    = var.hostname
-#   platform_id = var.platform_id
   zone        = var.zone
 
   resources {
@@ -62,3 +61,35 @@ data "template_file" "cloudinit" {
     ssh_public_key = file("~/.ssh/id_ed25519.pub")
   }
 }
+
+resource "time_sleep" "wait_150_seconds" {
+  create_duration = "150s"
+}
+
+# Fill ansible inventory
+resource "local_file" "inventory" {
+  content  = <<-XYZ
+[web]
+${yandex_compute_instance.web.network_interface.0.nat_ip_address}
+
+[all:vars]
+ansible_user=ubuntu
+ansible_ssh_private_key_file=~/.ssh/id_ed25519
+ansible_python_interpreter=/usr/bin/python3
+
+ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+XYZ
+  filename = "../ansible/inventory.ini"
+}
+
+ resource "null_resource" "ansible_config" {
+   depends_on = [
+     yandex_compute_instance.web,
+     local_file.env_file,
+     local_file.inventory,
+     time_sleep.wait_150_seconds
+   ]
+   provisioner "local-exec" {
+     command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ../ansible/inventory.ini ../ansible/playbook.yml"
+   }
+ }
